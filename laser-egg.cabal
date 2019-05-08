@@ -1,0 +1,20 @@
+name:                laser-egg
+version:             0.1.0.0
+-- synopsis:
+-- description:
+homepage:            https://github.com/ford-prefect/laser-egg#readme
+license:             BSD3
+license-file:        LICENSE
+author:              Arun Raghavan
+maintainer:          arun@arunraghavan.net
+copyright:           BSD2
+category:            IoT
+build-type:          Simple
+cabal-version:       >=1.10
+extra-source-files:  README.md
+
+executable laser-egg
+  hs-source-dirs:      src
+  main-is:             Main.hs
+  default-language:    Haskell2010
+  build-depends:       base >= 4.7 && < 5
