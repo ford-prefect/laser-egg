@@ -10,8 +10,8 @@ import Data.Aeson (FromJSON, Value(..), (.:), parseJSON)
 import Data.List (intercalate)
 import Data.Text (Text, pack, unpack)
 import GHC.Generics (Generic)
-import Network.HTTP.Types (status404)
-import Network.Wai (responseLBS)
+import Network.HTTP.Types (hContentType, status200, status404)
+import Network.Wai (pathInfo, responseFile, responseLBS, requestMethod)
 import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Prometheus (def, prometheus)
 import Network.Wreq (asJSON, defaults, getWith, param, responseBody)
@@ -111,10 +111,18 @@ main = do
   forkIO $ runLoop config gauges
 
   -- Start the HTTP server for Prometheus metrics
-  run (httpPort config) (prometheus def app)
+  run (httpPort config) (prometheus def $ app config)
 
   where
-    app _ respond = respond $ responseLBS status404 [] ""
+    app config request respond = respond $
+      if requestMethod request == "GET" &&
+         pathInfo request == [pack $ deviceUUID config]
+      then
+        -- Serve up all the data we have collected in the file
+        responseFile status200 [(hContentType, "text/plain")] (outFile config) Nothing
+      else
+        -- 404
+        responseLBS status404 [] ""
 
     runLoop config gauges = do
       let url     = apiEndpoint config ++ "/lasereggs/" ++ deviceUUID config
