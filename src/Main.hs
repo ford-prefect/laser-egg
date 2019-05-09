@@ -93,7 +93,7 @@ writeData file (Reading ts (Data pm25 pm10 hum temp rtvoc)) = do
   appendFile file out
 
 initGauges :: IO Gauges
-initGauges = Gauges <$> register (gauge $ Info "pm2.5" "PM2.5 (µg/m3)")
+initGauges = Gauges <$> register (gauge $ Info "pm25" "PM2.5 (µg/m3)")
                     <*> register (gauge $ Info "pm10" "PM10 (µg/m3)")
                     <*> register (gauge $ Info "humidity" "Humidity (%age)")
                     <*> register (gauge $ Info "temperature" "Celsius")
