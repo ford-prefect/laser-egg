@@ -19,6 +19,11 @@ executable laser-egg
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5,
                        aeson >= 1.4 && < 2,
+                       http-types >= 0.12 && < 1.0,
                        lens >= 4.17 && < 5,
+                       prometheus-client >= 1.0 && < 2,
                        text >= 1.2 && < 2,
+                       wai >= 3.2 && < 4,
+                       wai-middleware-prometheus >= 1.0 && < 2,
+                       warp >= 3.2 && < 4,
                        wreq >= 0.5 && < 0.6
