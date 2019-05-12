@@ -16,7 +16,7 @@ import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Prometheus (def, prometheus)
 import Network.Wreq (asJSON, defaults, getWith, param, responseBody)
 import Prometheus (Gauge, Info(..), gauge, register, setGauge)
-import System.Environment (getEnv)
+import System.Environment (getEnv, lookupEnv)
 import System.IO (hPutStrLn, stderr)
 
 data Config = Config { apiEndpoint :: String
@@ -77,9 +77,12 @@ defaultConfig :: IO Config
 defaultConfig = Config <$> pure defaultEndpoint
                        <*> getEnv "KAITERRA_API_KEY"
                        <*> getEnv "KAITERRA_DEVICE_UUID"
-                       <*> pure defaultPollRate
-                       <*> pure defaultFile
-                       <*> pure defaultHttpPort
+                       <*> envOrDefault "LASER_EGG_POLL_RATE" defaultPollRate
+                       <*> envOrDefault "LASER_EGG_OUT_FILE" defaultFile
+                       <*> envOrDefault "LASER_EGG_PORT" defaultHttpPort
+  where
+    envOrDefault :: Read a => String -> a -> IO a
+    envOrDefault env val = maybe val read <$> lookupEnv env
 
 writeHeader :: FilePath -> IO ()
 writeHeader file = do
