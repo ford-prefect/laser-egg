@@ -6,7 +6,7 @@ module Main where
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Exception (SomeException(..), try)
 import Control.Lens ((^.), (.~), (&))
-import Data.Aeson (FromJSON, Value(..), (.:), parseJSON)
+import Data.Aeson (FromJSON, (.:), parseJSON, withObject)
 import Data.List (intercalate)
 import Data.Text (Text, pack, unpack)
 import GHC.Generics (Generic)
@@ -15,7 +15,7 @@ import Network.Wai (pathInfo, responseFile, responseLBS, requestMethod)
 import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Prometheus (def, prometheus)
 import Network.Wreq (asJSON, defaults, getWith, param, responseBody)
-import Prometheus (Gauge, Info(..), Metric, gauge, register, setGauge)
+import Prometheus (Gauge, Info(..), gauge, register, setGauge)
 import System.Environment (getEnv)
 import System.IO (hPutStrLn, stderr)
 
@@ -52,12 +52,12 @@ data LaserEgg = LaserEgg { uuid :: Text -- UUID
 instance FromJSON Data
 
 instance FromJSON Reading where
-  parseJSON (Object v) = Reading
+  parseJSON = withObject "Reading" $ \v -> Reading
     <$> v .: "ts"
     <*> v .: "data"
 
 instance FromJSON LaserEgg where
-  parseJSON (Object v) = LaserEgg
+  parseJSON = withObject "LaserEgg" $ \v -> LaserEgg
     <$> v .: "id"
     <*> v .: "info.aqi"
 
@@ -87,8 +87,8 @@ writeHeader file = do
   appendFile file header
 
 writeData :: FilePath -> Reading -> IO ()
-writeData file (Reading ts (Data pm25 pm10 hum temp rtvoc)) = do
-  let values = (unpack ts : map show [pm25, pm10, hum, temp]) ++ [maybe "" show rtvoc]
+writeData file (Reading time d) = do
+  let values = (unpack time : map show [pm25 d, pm10 d, humidity d, temp d]) ++ [maybe "" show (rtvoc d)]
       out    = intercalate ", " values ++ "\n"
   appendFile file out
 
@@ -108,7 +108,7 @@ main = do
   writeHeader $ outFile config
 
   -- Now read data, write it out, and sleep in a loop
-  forkIO $ runLoop config gauges
+  _ <- forkIO $ runLoop config gauges
 
   -- Start the HTTP server for Prometheus metrics
   run (httpPort config) (prometheus def $ app config)
