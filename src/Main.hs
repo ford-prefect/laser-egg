@@ -38,7 +38,7 @@ data Data = Data { pm25     :: Double -- µg/m3
                  , pm10     :: Double -- µg/m3
                  , humidity :: Double -- %age
                  , temp     :: Double -- °C
-                 , rtvoc    :: Double -- parts per billion
+                 , rtvoc    :: Maybe Double -- parts per billion
                  } deriving (Generic, Show)
 
 data Reading = Reading { ts    :: Text   -- RFC3339 time
@@ -88,7 +88,7 @@ writeHeader file = do
 
 writeData :: FilePath -> Reading -> IO ()
 writeData file (Reading ts (Data pm25 pm10 hum temp rtvoc)) = do
-  let values = unpack ts : map show [pm25, pm10, hum, temp, rtvoc]
+  let values = (unpack ts : map show [pm25, pm10, hum, temp]) ++ [maybe "" show rtvoc]
       out    = intercalate ", " values ++ "\n"
   appendFile file out
 
@@ -141,7 +141,7 @@ main = do
           setGauge (gPm10 gauges) (pm10 $ value reading)
           setGauge (gHumidity gauges) (humidity $ value reading)
           setGauge (gTemp gauges) (temp $ value reading)
-          setGauge (gRtvoc gauges) (rtvoc $ value reading)
+          sequence $ setGauge (gRtvoc gauges) <$> rtvoc (value reading)
 
       case res of
            Left err -> hPutStrLn stderr $ "Error: " ++ show (err :: SomeException)
