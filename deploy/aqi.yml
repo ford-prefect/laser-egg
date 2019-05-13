@@ -58,6 +58,9 @@ spec:
         ports:
         - containerPort: 9090
           name: prometheus
+        args:
+        - --config.file=/prometheus-data/prometheus.yml
+        - --storage.tsdb.retention.time=100y
         volumeMounts:
         - name: prometheus-data
           mountPath: /prometheus
