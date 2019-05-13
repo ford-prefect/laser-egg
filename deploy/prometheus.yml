@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s
+
+  external_labels:
+    monitor: 'aqi-monitor'
+
+scrape_configs:
+  - job_name: 'laser-egg'
+
+    static_configs:
+      - targets: ['localhost:10000']
