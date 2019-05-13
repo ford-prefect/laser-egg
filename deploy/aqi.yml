@@ -73,16 +73,25 @@ spec:
         - name: grafana-data
           mountPath: /var/lib
       initContainers:
-      - name: prometheus-yml-install
+      - name: prometheus-init
         image: alpine
-        command: ["wget"]
+        command: ["/bin/sh"]
         args:
-        - "-O"
-        - "/prometheus/prometheus.yml"
-        - "https://raw.githubusercontent.com/ford-prefect/laser-egg/7f7b6dc8b1845af7feed3ba1e1fdb92d8cfe56a7/deploy/prometheus.yml"
+        - "-c"
+        - "chown -R 65534 /prometheus/; wget -O /prometheus/prometheus.yml https://raw.githubusercontent.com/ford-prefect/laser-egg/7f7b6dc8b1845af7feed3ba1e1fdb92d8cfe56a7/deploy/prometheus.yml"
         volumeMounts:
         - name: prometheus-data
           mountPath: /prometheus
+      - name: grafana-init
+        image: alpine
+        command: ["/bin/sh"]
+        args:
+        - "-c"
+        # FIXME: need to keep this in sync with the Grafana Dockerfile
+        - "mkdir /var/lib/grafana /var/lib/grafana/plugins; chown -R 472 /var/lib/; chmod 777 /var/lib/grafana/plugins"
+        volumeMounts:
+        - name: grafana-data
+          mountPath: /var/lib
   volumeClaimTemplates:
   # FIXME: Can this be made agnostic of DigitalOcean?
   - metadata:
