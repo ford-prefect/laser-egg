@@ -91,7 +91,7 @@ spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
-          storage: 1Gi
+          storage: 2Gi
       storageClassName: do-block-storage
   - metadata:
       name: prometheus-data
