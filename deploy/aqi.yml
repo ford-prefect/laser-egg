@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aqi
+  labels:
+    app: aqi
+spec:
+  selector:
+    app: aqi
+  clusterIP: None
+  ports:
+  - port: 80
+    targetPort: 3000
+    name: http-grafana
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: aqi
+  labels:
+    app: aqi
+spec:
+  serviceName: "aqi"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aqi
+  template:
+    metadata:
+      labels:
+        app: aqi
+    spec:
+      containers:
+      - name: laser-egg
+        image: arunsr/laser-egg:latest
+        ports:
+        - containerPort: 10000
+          name: prom-client
+        volumeMounts:
+        - name: aqi-data
+          mountPath: /data
+        env:
+        - name: "LASER_EGG_OUT_FILE"
+          value: "/data/aqi.txt"
+        - name: "KAITERRA_API_KEY"
+          valueFrom:
+            secretKeyRef:
+              name: kaiterra
+              key: api-key
+        - name: "KAITERRA_DEVICE_UUID"
+          valueFrom:
+            secretKeyRef:
+              name: kaiterra
+              key: device-uuid
+      - name: prometheus
+        image: prom/prometheus
+        ports:
+        - containerPort: 9090
+          name: prometheus
+        volumeMounts:
+        - name: prometheus-data
+          mountPath: /prometheus
+      - name: grafana
+        image: grafana/grafana
+        ports:
+        - containerPort: 3000
+          name: grafana
+        volumeMounts:
+        - name: grafana-data
+          mountPath: /var
+      initContainers:
+      - name: prometheus-yml-install
+        image: alpine
+        command: ["wget"]
+        args:
+        - "-O"
+        - "/prometheus/prometheus.yml"
+        - "https://raw.githubusercontent.com/ford-prefect/laser-egg/7f7b6dc8b1845af7feed3ba1e1fdb92d8cfe56a7/deploy/prometheus.yml"
+        volumeMounts:
+        - name: prometheus-data
+          mountPath: /prometheus
+  volumeClaimTemplates:
+  # FIXME: Can this be made agnostic of DigitalOcean?
+  - metadata:
+      name: aqi-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+      storageClassName: do-block-storage
+  - metadata:
+      name: prometheus-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 4Gi
+      storageClassName: do-block-storage
+  - metadata:
+      name: grafana-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+      storageClassName: do-block-storage

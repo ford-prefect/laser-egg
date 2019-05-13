@@ -1,6 +1,7 @@
 FROM haskell:8.6 AS builder
 WORKDIR /opt/laser-egg
 ADD . .
+RUN git clean -dfx
 RUN stack --install-ghc install && strip /root/.local/bin/laser-egg
 
 FROM debian:stretch
