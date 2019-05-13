@@ -71,7 +71,7 @@ spec:
           name: grafana
         volumeMounts:
         - name: grafana-data
-          mountPath: /var
+          mountPath: /var/lib
       initContainers:
       - name: prometheus-yml-install
         image: alpine
