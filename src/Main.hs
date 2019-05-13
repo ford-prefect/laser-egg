@@ -8,6 +8,7 @@ import Control.Exception (SomeException(..), try)
 import Control.Lens ((^.), (.~), (&))
 import Data.Aeson (FromJSON, (.:), parseJSON, withObject)
 import Data.List (intercalate)
+import Data.Maybe (fromMaybe)
 import Data.Text (Text, pack, unpack)
 import GHC.Generics (Generic)
 import Network.HTTP.Types (hContentType, status200, status404)
@@ -78,7 +79,7 @@ defaultConfig = Config <$> pure defaultEndpoint
                        <*> getEnv "KAITERRA_API_KEY"
                        <*> getEnv "KAITERRA_DEVICE_UUID"
                        <*> envOrDefault "LASER_EGG_POLL_RATE" defaultPollRate
-                       <*> envOrDefault "LASER_EGG_OUT_FILE" defaultFile
+                       <*> (fromMaybe defaultFile <$> lookupEnv "LASER_EGG_OUT_FILE")
                        <*> envOrDefault "LASER_EGG_PORT" defaultHttpPort
   where
     envOrDefault :: Read a => String -> a -> IO a
