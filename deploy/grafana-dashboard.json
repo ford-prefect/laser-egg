@@ -69,7 +69,7 @@
         "valueOptions": {
           "decimals": null,
           "prefix": "",
-          "stat": "mean",
+          "stat": "last",
           "suffix": "",
           "unit": "conμgm3"
         }
@@ -140,7 +140,7 @@
         "valueOptions": {
           "decimals": null,
           "prefix": "",
-          "stat": "mean",
+          "stat": "last",
           "suffix": "",
           "unit": "conμgm3"
         }
@@ -206,7 +206,7 @@
         "valueOptions": {
           "decimals": null,
           "prefix": "",
-          "stat": "mean",
+          "stat": "last",
           "suffix": "",
           "unit": "conppb"
         }
@@ -267,7 +267,7 @@
         "valueOptions": {
           "decimals": null,
           "prefix": "",
-          "stat": "mean",
+          "stat": "last",
           "suffix": "",
           "unit": "percent"
         }
@@ -342,6 +342,7 @@
         {
           "expr": "pm25",
           "format": "time_series",
+          "instant": false,
           "intervalFactor": 1,
           "legendFormat": "PM2.5",
           "refId": "A"
@@ -349,6 +350,7 @@
         {
           "expr": "pm10",
           "format": "time_series",
+          "instant": false,
           "intervalFactor": 1,
           "legendFormat": "PM10",
           "refId": "B"
@@ -356,6 +358,7 @@
         {
           "expr": "tvoc",
           "format": "time_series",
+          "instant": false,
           "intervalFactor": 1,
           "legendFormat": "TVOC",
           "refId": "C"
@@ -363,6 +366,7 @@
         {
           "expr": "humidity",
           "format": "time_series",
+          "instant": false,
           "intervalFactor": 1,
           "legendFormat": "Humidity",
           "refId": "D"
@@ -458,7 +462,7 @@
         "valueOptions": {
           "decimals": null,
           "prefix": "",
-          "stat": "mean",
+          "stat": "last",
           "suffix": "",
           "unit": "celsius"
         }
@@ -514,5 +518,5 @@
   "timezone": "",
   "title": "Air Quality",
   "uid": "RZvLzjmWk",
-  "version": 2
+  "version": 4
 }
