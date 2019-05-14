@@ -7,9 +7,14 @@ import Control.Concurrent (forkIO, threadDelay)
 import Control.Exception (SomeException(..), try)
 import Control.Lens ((^.), (.~), (&))
 import Data.Aeson (FromJSON, (.:), parseJSON, withObject)
+import Data.Either (fromRight)
+import Data.Functor (($>))
 import Data.List (intercalate)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text, pack, unpack)
+import Data.Time.Clock (diffUTCTime, getCurrentTime)
+import Data.Time.LocalTime (zonedTimeToUTC)
+import Data.Time.RFC3339 (parseTimeRFC3339)
 import GHC.Generics (Generic)
 import Network.HTTP.Types (hContentType, status200, status404)
 import Network.Wai (pathInfo, responseFile, responseLBS, requestMethod)
@@ -112,7 +117,8 @@ main = do
   writeHeader $ outFile config
 
   -- Now read data, write it out, and sleep in a loop
-  _ <- forkIO $ runLoop config gauges
+  now <- getCurrentTime
+  _   <- forkIO $ runLoop config gauges now
 
   -- Start the HTTP server for Prometheus metrics
   run (httpPort config) (prometheus def $ app config)
@@ -128,24 +134,22 @@ main = do
         -- 404
         responseLBS status404 [] ""
 
-    runLoop config gauges = do
+    runLoop config gauges prevTs = do
       let url     = apiEndpoint config ++ "/lasereggs/" ++ deviceUUID config
           options = defaults & param "key" .~ [pack $ apiKey config]
 
       res <- try $ do
           -- Call the API
           resp <- asJSON =<< getWith options url
-          let reading = info $ resp ^. responseBody
+          let reading   = info $ resp ^. responseBody
+              timestamp = zonedTimeToUTC <$> parseTimeRFC3339 (ts reading)
 
-          -- Write out the data
-          writeData (outFile config) reading
+          _ <- case timestamp of
+            Just time | diffUTCTime time prevTs > 30 -> process config gauges reading $> ()
+            Just time                                -> hPutStrLn stderr $ "Got potentially stale data: prev = " ++ show prevTs ++ ", cur = " ++ show time
+            Nothing                                  -> hPutStrLn stderr $ "Got bad timestamp: " ++ show (ts reading)
 
-          -- Expose metrics to Prometheus
-          setGauge (gPm25 gauges) (pm25 $ value reading)
-          setGauge (gPm10 gauges) (pm10 $ value reading)
-          setGauge (gHumidity gauges) (humidity $ value reading)
-          setGauge (gTemp gauges) (temp $ value reading)
-          sequence $ setGauge (gRtvoc gauges) <$> rtvoc (value reading)
+          return (fromMaybe prevTs timestamp)
 
       case res of
            Left err -> hPutStrLn stderr $ "Error: " ++ show (err :: SomeException)
@@ -154,4 +158,15 @@ main = do
       -- Wait for a bit
       threadDelay $ 1000000 * pollRate config
 
-      runLoop config gauges
+      runLoop config gauges (fromRight prevTs res)
+
+    process config gauges reading = do
+      -- Write out the data
+      writeData (outFile config) reading
+
+      -- Expose metrics to Prometheus
+      setGauge (gPm25 gauges) (pm25 $ value reading)
+      setGauge (gPm10 gauges) (pm10 $ value reading)
+      setGauge (gHumidity gauges) (humidity $ value reading)
+      setGauge (gTemp gauges) (temp $ value reading)
+      sequence $ setGauge (gRtvoc gauges) <$> rtvoc (value reading)
