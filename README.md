@@ -22,6 +22,13 @@ A Kubernetes deployment to visualise this data via Prometheus and Grafana is in
 
 ```sh
 # Set up your KUBECONFIG as appropriate
-$ kubectl create secret generic kaiterra --from-literal=api-key=<API_KEY> --from-literal=device-uuid=<UUID>
+$ kubectl create secret generic aqi \
+    --from-literal=kaiterra-api-key=<API_KEY> \
+    --from-literal=kaiterra-device-uuid=<UUID> \
+    --from-literal=grafana-admin-password=<PASSWORD>
 $ kubectl apply -f deploy/aqi.yml
 ```
+
+For now, you must manually set up Grafana by pointing to the default Prometheus
+data source and adding a dashboard using the file at
+`deploy/grafana-dashboard.json`.

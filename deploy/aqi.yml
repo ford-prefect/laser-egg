@@ -47,13 +47,13 @@ spec:
         - name: "KAITERRA_API_KEY"
           valueFrom:
             secretKeyRef:
-              name: kaiterra
-              key: api-key
+              name: aqi
+              key: kaiterra-api-key
         - name: "KAITERRA_DEVICE_UUID"
           valueFrom:
             secretKeyRef:
-              name: kaiterra
-              key: device-uuid
+              name: aqi
+              key: kaiterra-device-uuid
       - name: prometheus
         image: prom/prometheus
         ports:
@@ -73,6 +73,12 @@ spec:
         volumeMounts:
         - name: grafana-data
           mountPath: /var/lib
+        env:
+        - name: "GF_SECURITY_ADMIN_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              name: aqi
+              key: grafana-admin-password
       initContainers:
       - name: prometheus-init
         image: alpine
